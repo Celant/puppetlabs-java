@@ -278,6 +278,30 @@ define java::oracle (
             }
             default : { }
           }
+					case $facts['os']['family'] {
+						'Debian' : {
+							exec { "Install java alternatives to ${creates_path}/bin" :
+                command => "/usr/sbin/update-alternatives --install \"/usr/bin/java\" \"java\" \"${creates_path}/bin/java\" 0",
+                require => Exec["Install Oracle java_se ${java_se} ${version}"],
+                unless  => "/usr/bin/test /etc/alternatives/java -ef '${creates_path}/bin/java'",
+							}
+							exec { "Install javac alternatives to ${creates_path}/bin" :
+                command => "/usr/sbin/update-alternatives --install \"/usr/bin/javac\" \"javac\" \"${creates_path}/bin/javac\" 0",
+                require => Exec["Install Oracle java_se ${java_se} ${version}"],
+                unless  =>  "/usr/bin/test /etc/alternatives/javac -ef '${creates_path}/bin/javac'",
+							}
+							exec { "Set java alternatives" :
+                command => "/usr/sbin/update-alternatives --set java ${creates_path}/bin/java",
+                require => Exec["Install java alternatives to ${creates_path}/bin"],
+                unless  =>  "/usr/bin/test /etc/alternatives/java -ef '${creates_path}/bin/java'",
+							}
+							exec { "Set javac alternatives" :
+                command => "/usr/sbin/update-alternatives --set javac ${creates_path}/bin/javac",
+                require => Exec["Install javac alternatives to ${creates_path}/bin"],
+                unless  =>   "/usr/bin/test /etc/alternatives/javac -ef '${creates_path}/bin/javac'",
+							}
+						}
+					}
         }
         default : {
           fail ("unsupported platform ${$facts['kernel']}")
